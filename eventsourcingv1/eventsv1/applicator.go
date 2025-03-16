@@ -7,20 +7,20 @@ import (
 	"go.uber.org/zap"
 )
 
-type Applicator[T any] struct {
+type EventApplicator[T any] struct {
 	adapter eventsourcingv1.Adapter[T]
 	source  eventsourcingv1.EventSource
 	r       Reader
 }
 
-func NewApplicator[T any](r Reader, source eventsourcingv1.EventSource) *Applicator[T] {
-	return &Applicator[T]{
+func NewApplicator[T any](r Reader, source eventsourcingv1.EventSource) *EventApplicator[T] {
+	return &EventApplicator[T]{
 		source: source,
 		r:      r,
 	}
 }
 
-func (a *Applicator[T]) Apply(ctx context.Context, ent *T) *ApplicatorError {
+func (a *EventApplicator[T]) Apply(ctx context.Context, ent *T) *ApplicatorError {
 	next, err := a.r.Get(ctx, a.adapter.GetEntityId(*ent))
 	if err != nil {
 		return &ApplicatorError{err, nil}
