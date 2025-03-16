@@ -4,33 +4,38 @@ import (
 	"context"
 
 	"github.com/ooqls/go-eventsource/eventsourcingv1"
+	"go.uber.org/zap"
 )
 
-type Applicator interface {
-	Apply(ctx context.Context, ent eventsourcingv1.Entity) error
+type Applicator[T any] struct {
+	adapter eventsourcingv1.Adapter[T]
+	source  eventsourcingv1.EventSource
+	r       Reader
 }
 
-type SQLApplicator struct {
-	source eventsourcingv1.EventSource
-	r      Reader
-}
-
-func NewSQLApplicator(r Reader, source eventsourcingv1.EventSource) *SQLApplicator {
-	return &SQLApplicator{
+func NewApplicator[T any](r Reader, source eventsourcingv1.EventSource) *Applicator[T] {
+	return &Applicator[T]{
 		source: source,
 		r:      r,
 	}
 }
 
-func (a *SQLApplicator) Apply(ctx context.Context, ent eventsourcingv1.Entity) error {
-	next, err := a.r.Get(ctx, ent.GetId())
+func (a *Applicator[T]) Apply(ctx context.Context, ent *T) *ApplicatorError {
+	next, err := a.r.Get(ctx, a.adapter.GetEntityId(*ent))
 	if err != nil {
-		return err
+		return &ApplicatorError{err, nil}
 	}
-	ev := next()
+
+	ev, err := next()
 	for ev != nil {
-		ent.Apply(*ev)
-		ev = next()
+		err = a.adapter.Apply(*ev, ent)
+		if err != nil {
+			l.Error("failed to apply event", zap.Error(err), zap.String("event", string(ev.Key)))
+		}
+		ev, err = next()
+		if err != nil {
+			return &ApplicatorError{err, nil}
+		}
 	}
 	return nil
 }
