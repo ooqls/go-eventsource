@@ -10,6 +10,8 @@ import (
 	"github.com/ooqls/go-eventsource/eventsourcingv1"
 )
 
+var _ Reader = &SQLReader{}
+
 type EventIterator func() bool
 
 type Reader interface {
@@ -54,7 +56,7 @@ func (r *SQLReader) Get(ctx context.Context, entityId uuid.UUID) (eventsourcingv
 	if r.options.cache != nil {
 		cached, err := r.options.cache.Get(ctx, entityId)
 		if err == nil {
-			return eventsourcingv1.NewArrayIterator(cached), nil
+			return eventsourcingv1.NewArrayEventIterator(cached), nil
 		}
 	}
 
@@ -63,16 +65,16 @@ func (r *SQLReader) Get(ctx context.Context, entityId uuid.UUID) (eventsourcingv
 		return nil, fmt.Errorf("failed to query events: %v", err)
 	}
 
-	return eventsourcingv1.NewSQLIterator[eventsourcingv1.Event](rows), nil
+	return eventsourcingv1.NewSQLEventIterator(rows), nil
 }
 
-func (r *SQLReader) GetAll(ctx context.Context) (eventsourcingv1.Iterator[*eventsourcingv1.Event], error) {
+func (r *SQLReader) GetAll(ctx context.Context) (eventsourcingv1.Iterator[eventsourcingv1.Event], error) {
 	rows, err := r.db.QueryxContext(ctx, fmt.Sprintf(GetAllEventsTableFmt, r.eventTable))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query events: %v", err)
 	}
 
-	return eventsourcingv1.NewSQLIterator[*eventsourcingv1.Event](rows), nil
+	return eventsourcingv1.NewSQLEventIterator(rows), nil
 }
 
 func (r *SQLReader) Count(ctx context.Context, entityId uuid.UUID) (int64, error) {

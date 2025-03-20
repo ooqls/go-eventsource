@@ -53,10 +53,11 @@ func TestEventReader(t *testing.T) {
 	assert.NotNilf(t, next, "Get should return an iterator")
 
 	var ev *eventsourcingv1.Event
-	ev = next()
+	ev, err = next()
 	for ev != nil {
 		ent.Apply(*ev)
-		ev = next()
+		ev, err = next()
+		assert.Nilf(t, err, "should not get an error when getting next event: %v", err)
 	}
 
 	assert.Equalf(t, "test2", ent.Name, "events should be in order")

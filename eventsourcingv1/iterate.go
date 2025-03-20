@@ -22,11 +22,23 @@ func NewArrayIterator[T any](arr []T) Iterator[T] {
 	}
 }
 
-func NewSQLIterator[T any](rows *sqlx.Rows) Iterator[T] {
-	return func() (*T, error) {
-		var v T
+func NewArrayEventIterator(arr []Event) Iterator[Event] {
+	i := 0
+	return func() (*Event, error) {
+		if i < len(arr) {
+			v := arr[i]
+			i++
+			return &v, nil
+		}
+		return nil, nil
+	}
+}
+
+func NewSQLEventIterator(rows *sqlx.Rows) Iterator[Event] {
+	next := func() (*Event, error) {
+		var v Event
 		if rows.Next() {
-			if err := rows.StructScan(v); err != nil {
+			if err := rows.StructScan(&v); err != nil {
 				l.Error("Failed to scan row", zap.Error(err))
 				return nil, err
 			}
@@ -38,11 +50,8 @@ func NewSQLIterator[T any](rows *sqlx.Rows) Iterator[T] {
 			}
 		}
 
-		if err := rows.Err(); err != nil {
-			l.Error("Error iterating rows", zap.Error(err))
-			return nil, err
-		}
-
 		return nil, nil
 	}
+
+	return next
 }
