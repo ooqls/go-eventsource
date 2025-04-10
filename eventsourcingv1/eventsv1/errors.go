@@ -4,5 +4,5 @@ import "github.com/ooqls/go-eventsource/eventsourcingv1"
 
 type ApplicatorError struct {
 	error
-	events []eventsourcingv1.Event
+	Events []eventsourcingv1.Event
 }
