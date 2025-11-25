@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/ooqls/go-db/sqlx"
 	"github.com/ooqls/go-db/testutils"
 	"github.com/ooqls/go-eventsource/eventsourcingv1"
-
 	"github.com/ooqls/go-eventsource/eventsourcingv1/tablesv1"
 )
 
@@ -33,12 +33,16 @@ func (e *TestEntity) Apply(event eventsourcingv1.Event) error {
 	return nil
 }
 func TestMain(m *testing.M) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	cont := testutils.StartPostgres(ctx)
 
-	cont := testutils.InitPostgres(tablesv1.GetCreateTableStmts(eventsourcingv1.EventSource("test")), []string{})
+	sqlx.SeedSQLX((tablesv1.GetCreateTableStmts(eventsourcingv1.EventSource("test"))), []string{})
+
 	timeout := time.Second * 30
-	defer cont.Stop(context.Background(), &timeout)
+	defer cont.Stop(ctx, &timeout)
 
-	redisCont := testutils.InitRedis()
+	redisCont := testutils.StartRedis(ctx)
 	defer redisCont.Stop(context.Background(), &timeout)
 
 	m.Run()

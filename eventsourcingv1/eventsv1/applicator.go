@@ -31,7 +31,7 @@ func (a *EventApplicator[T]) Apply(ctx context.Context, ent *T) *ApplicatorError
 		err = a.adapter.Apply(*ev, ent)
 		if err != nil {
 			l.Error("failed to apply event", zap.Error(err), zap.String("event", string(ev.Key)))
-			appErr.events = append(appErr.events, *ev)
+			appErr.Events = append(appErr.Events, *ev)
 		}
 		ev, err = next()
 		if err != nil {
@@ -39,7 +39,7 @@ func (a *EventApplicator[T]) Apply(ctx context.Context, ent *T) *ApplicatorError
 		}
 	}
 
-	if len(appErr.events) > 0 {
+	if len(appErr.Events) > 0 {
 		return &appErr
 	}
 

@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	db "github.com/ooqls/go-db/postgres"
+	"github.com/ooqls/go-db/sqlx"
 	"github.com/ooqls/go-eventsource/eventsourcingv1"
 	"github.com/ooqls/go-eventsource/eventsourcingv1/eventsv1"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEventWriter(t *testing.T) {
-	sqldb := db.Get()
+	sqldb := sqlx.GetSQLX()
 	store := eventsv1.NewSQLWriter(sqldb, eventsourcingv1.EventSource("test"))
 	obj := &TestEntity{Id: uuid.New(), Name: "test"}
 
@@ -30,7 +30,7 @@ func TestEventWriter(t *testing.T) {
 }
 
 func TestEventReader(t *testing.T) {
-	sqldb := db.Get()
+	sqldb := sqlx.GetSQLX()
 	ent := TestEntity{}
 	source := eventsourcingv1.EventSource("test")
 	reader := eventsv1.NewSQLReader(sqldb, source)

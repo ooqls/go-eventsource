@@ -55,7 +55,7 @@ func NewGoCache[T any](opts ...lib_store.Option) cache.CacheInterface[T] {
 }
 
 func NewRedisCache[T any](opts ...lib_store.Option) cache.CacheInterface[T] {
-	c := goredis.GetConnection()
+	c := goredis.GetConnection(context.Background())
 	redisStore := redis.NewRedis(c, opts...)
 	redisCached := cache.New[string](redisStore)
 	jsonCache := NewJsonCache[T](redisCached, opts...)
